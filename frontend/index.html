@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda Online — AWS Serverless</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0c0f;
+      --surface: #13131a;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --green: #00e5a0;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 48px 48px;
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow blob */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 700px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(108,99,255,0.18) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 48px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      letter-spacing: 0.08em;
+    }
+
+    main {
+      position: relative;
+      z-index: 10;
+      max-width: 860px;
+      margin: 60px auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .panel:nth-child(3) { animation-delay: 0.1s; }
+    .panel:nth-child(4) { animation-delay: 0.2s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+    .panel-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.12);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 24px;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(108,99,255,0.45);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Feedback card */
+    .feedback {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s;
+    }
+
+    .feedback.success {
+      border-color: rgba(0,229,160,0.3);
+      background: rgba(0,229,160,0.05);
+      color: var(--green);
+    }
+
+    .feedback.error {
+      border-color: rgba(255,101,132,0.3);
+      background: rgba(255,101,132,0.05);
+      color: var(--accent2);
+    }
+
+    /* Order detail */
+    .order-detail {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .order-detail.visible { display: flex; }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+    }
+
+    .detail-value {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text);
+      max-width: 60%;
+      text-align: right;
+      word-break: break-all;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: rgba(255,200,50,0.1);
+      color: #ffc832;
+      border: 1px solid rgba(255,200,50,0.2);
+    }
+
+    .status-processed {
+      background: rgba(0,229,160,0.1);
+      color: var(--green);
+      border: 1px solid rgba(0,229,160,0.2);
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(108,99,255,0.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .query-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .query-row input { flex: 1; }
+
+    @media (max-width: 580px) {
+      header { padding: 16px 20px; }
+      main { margin: 32px auto; }
+      .field-row { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🛍</div>
+      Tienda Online
+    </div>
+    <div class="badge">AWS Serverless</div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Gestión de <span>pedidos</span></h1>
+      <p>Crea pedidos y consulta su estado en tiempo real.</p>
+    </div>
+
+    <!-- Panel: Crear pedido -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="dot"></div>
+        Nuevo pedido
+      </div>
+      <div class="panel-body">
+        <div class="field-row">
+          <div class="field">
+            <label>Nombre del cliente</label>
+            <input id="customerName" type="text" placeholder="Ej: Fernando Alonso" />
+          </div>
+          <div class="field">
+            <label>Artículos (separados por coma)</label>
+            <input id="items" type="text" placeholder="Ej: Motor, Ruedas" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="crearPedido()">
+            <span id="spinner-create" class="spinner"></span>
+            Crear pedido
+          </button>
+        </div>
+        <div id="create-feedback" class="feedback">Esperando acción...</div>
+      </div>
+    </div>
+
+    <!-- Panel: Consultar estado -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="dot green"></div>
+        Estado del pedido
+      </div>
+      <div class="panel-body">
+        <div class="field">
+          <label>ID del pedido</label>
+          <div class="query-row">
+            <input id="orderId" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+            <button class="btn btn-secondary" onclick="consultarPedido()">
+              <span id="spinner-query" class="spinner"></span>
+              Consultar
+            </button>
+          </div>
+        </div>
+
+        <div id="order-detail" class="order-detail">
+          <div class="detail-row">
+            <span class="detail-label">order_id</span>
+            <span class="detail-value" id="d-id">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">customer</span>
+            <span class="detail-value" id="d-customer">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">items</span>
+            <span class="detail-value" id="d-items">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">status</span>
+            <span class="detail-value" id="d-status">—</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">created_at</span>
+            <span class="detail-value" id="d-created">—</span>
+          </div>
+        </div>
+
+        <div id="query-feedback" class="feedback" style="display:none"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_URL = "https://fw05kv0nu7.execute-api.eu-north-1.amazonaws.com";
+
+    function setSpinner(id, on) {
+      document.getElementById(id).style.display = on ? 'block' : 'none';
+    }
+
+    function setFeedback(id, msg, type = '') {
+      const el = document.getElementById(id);
+      el.className = 'feedback' + (type ? ' ' + type : '');
+      el.style.display = 'flex';
+      el.textContent = msg;
+    }
+
+    function statusPill(status) {
+      const cls = status === 'PROCESSED' ? 'status-processed' : 'status-pending';
+      const icon = status === 'PROCESSED' ? '✓' : '○';
+      return `<span class="status-pill ${cls}">${icon} ${status}</span>`;
+    }
+
+    async function crearPedido() {
+      const customer = document.getElementById('customerName').value.trim();
+      const items = document.getElementById('items').value.trim();
+
+      setSpinner('spinner-create', true);
+      setFeedback('create-feedback', 'Enviando pedido...', '');
+
+      try {
+        const res = await fetch(`${API_URL}/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer, items })
+        });
+
+        if (res.status === 429) {
+          setFeedback('create-feedback', '⚠ Límite alcanzado: máximo 20 pedidos por hora por IP.', 'error');
+          return;
+        }
+
+        const data = await res.json();
+        const id = data.id || data.orderId || '';
+
+        if (id) document.getElementById('orderId').value = id;
+
+        const remaining = res.headers.get('X-RateLimit-Remaining');
+        const suffix = remaining !== null ? ` (${remaining} pedidos restantes esta hora)` : '';
+        setFeedback('create-feedback', `✓ Pedido creado — ID: ${id}${suffix}`, 'success');
+      } catch (err) {
+        setFeedback('create-feedback', `Error: ${err}`, 'error');
+      } finally {
+        setSpinner('spinner-create', false);
+      }
+    }
+
+    async function consultarPedido() {
+      const id = document.getElementById('orderId').value.trim();
+      if (!id) {
+        setFeedback('query-feedback', 'Introduce un ID de pedido.', 'error');
+        document.getElementById('query-feedback').style.display = 'flex';
+        document.getElementById('order-detail').classList.remove('visible');
+        return;
+      }
+
+      setSpinner('spinner-query', true);
+      document.getElementById('order-detail').classList.remove('visible');
+      document.getElementById('query-feedback').style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_URL}/orders/${id}`);
+        const data = await res.json();
+
+        if (res.status === 404) {
+          setFeedback('query-feedback', 'Pedido no encontrado.', 'error');
+          document.getElementById('query-feedback').style.display = 'flex';
+          return;
+        }
+
+        document.getElementById('d-id').textContent = data.id || id;
+        document.getElementById('d-customer').textContent = data.customer || '—';
+        document.getElementById('d-items').textContent = data.items || '—';
+        document.getElementById('d-status').innerHTML = statusPill(data.status || 'PENDING');
+        document.getElementById('d-created').textContent = data.createdAt || data.created_at || '—';
+        document.getElementById('order-detail').classList.add('visible');
+      } catch (err) {
+        setFeedback('query-feedback', `Error: ${err}`, 'error');
+        document.getElementById('query-feedback').style.display = 'flex';
+      } finally {
+        setSpinner('spinner-query', false);
+      }
+    }
+  </script>
+</body>
+</html>
