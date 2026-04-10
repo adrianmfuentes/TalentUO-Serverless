@@ -184,4 +184,4 @@ Aporta resiliencia: si `orders-processor` falla, SQS retiene el mensaje y reinte
 
 ## Autor
 
-UO295454 — Taller Microservicios Serverless en AWS, Talentuo × Next Digital
+Adrián Martínez, UO295454 — Taller Microservicios Serverless en AWS, Talentuo × Next Digital
