@@ -169,19 +169,6 @@ El header `X-RateLimit-Remaining` en la respuesta indica cuántos pedidos quedan
 
 ---
 
-## Decisiones de diseño
-
-**¿Por qué DynamoDB y no RDS?**
-Los pedidos no requieren joins ni transacciones complejas. DynamoDB ofrece latencia en milisegundos, escala automáticamente y su modelo de coste encaja con el patrón serverless: se paga solo por lo que se usa.
-
-**¿Por qué EventBridge entre la creación y el procesado?**
-Desacopla ambas Lambdas. `orders-handler` no sabe ni le importa quién procesa el pedido. Si en el futuro hay que añadir más consumidores (analytics, notificaciones push, etc.), se añade una regla en EventBridge sin tocar el handler.
-
-**¿Por qué SQS entre EventBridge y el procesador?**
-Aporta resiliencia: si `orders-processor` falla, SQS retiene el mensaje y reintenta. La DLQ captura los mensajes que fallen repetidamente para poder inspeccionarlos sin perderlos.
-
----
-
 ## Autor
 
 Adrián Martínez, UO295454 — Taller Microservicios Serverless en AWS, Talentuo × Next Digital
